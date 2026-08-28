@@ -1,0 +1,109 @@
+# 3-node Clique proof-of-authority private network.
+# Validator addresses / bootnode enode come from network/.env, written by generate-genesis.js.
+# `geth init` on every start is idempotent against the same genesis.json (no-op if already initialized).
+#
+# `command` is given as a one-element list (not a bare scalar) so Compose passes the whole
+# script through to `sh -c` as a single argument, instead of shell-word-splitting it itself.
+
+services:
+  validator1:
+    image: ethereum/client-go:v1.13.15
+    volumes:
+      - ./data/validator1:/data
+      - ./genesis.json:/genesis.json:ro
+    ports:
+      - "8545:8545"
+      - "30303:30303"
+    networks:
+      privatenet:
+        aliases: [validator1]
+    entrypoint: ["/bin/sh", "-c"]
+    command:
+      - |
+        geth init --datadir /data/chaindata /genesis.json &&
+        exec geth \
+          --datadir /data/chaindata \
+          --keystore /data/keystore \
+          --nodekey /data/nodekey \
+          --networkid ${CHAIN_ID} \
+          --port 30303 \
+          --http --http.addr 0.0.0.0 --http.port 8545 \
+          --http.api eth,net,web3,personal,clique,txpool \
+          --http.corsdomain "*" --http.vhosts "*" \
+          --allow-insecure-unlock \
+          --unlock ${VALIDATOR1_ADDRESS} \
+          --password /data/password.txt \
+          --mine --miner.etherbase ${VALIDATOR1_ADDRESS} \
+          --miner.gasprice 0 \
+          --nat none \
+          --syncmode full
+
+  validator2:
+    image: ethereum/client-go:v1.13.15
+    volumes:
+      - ./data/validator2:/data
+      - ./genesis.json:/genesis.json:ro
+    ports:
+      - "8546:8545"
+      - "30304:30303"
+    networks:
+      privatenet:
+        aliases: [validator2]
+    depends_on: [validator1]
+    entrypoint: ["/bin/sh", "-c"]
+    command:
+      - |
+        geth init --datadir /data/chaindata /genesis.json &&
+        exec geth \
+          --datadir /data/chaindata \
+          --keystore /data/keystore \
+          --networkid ${CHAIN_ID} \
+          --port 30303 \
+          --http --http.addr 0.0.0.0 --http.port 8545 \
+          --http.api eth,net,web3,personal,clique,txpool \
+          --http.corsdomain "*" --http.vhosts "*" \
+          --allow-insecure-unlock \
+          --unlock ${VALIDATOR2_ADDRESS} \
+          --password /data/password.txt \
+          --mine --miner.etherbase ${VALIDATOR2_ADDRESS} \
+          --miner.gasprice 0 \
+          --bootnodes ${BOOTNODE_ENODE} \
+          --nat none \
+          --syncmode full
+
+  validator3:
+    image: ethereum/client-go:v1.13.15
+    volumes:
+      - ./data/validator3:/data
+      - ./genesis.json:/genesis.json:ro
+    ports:
+      - "8547:8545"
+      - "30305:30303"
+    networks:
+      privatenet:
+        aliases: [validator3]
+    depends_on: [validator1]
+    entrypoint: ["/bin/sh", "-c"]
+    command:
+      - |
+        geth init --datadir /data/chaindata /genesis.json &&
+        exec geth \
+          --datadir /data/chaindata \
+          --keystore /data/keystore \
+          --networkid ${CHAIN_ID} \
+          --port 30303 \
+          --http --http.addr 0.0.0.0 --http.port 8545 \
+          --http.api eth,net,web3,personal,clique,txpool \
+          --http.corsdomain "*" --http.vhosts "*" \
+          --allow-insecure-unlock \
+          --unlock ${VALIDATOR3_ADDRESS} \
+          --password /data/password.txt \
+          --mine --miner.etherbase ${VALIDATOR3_ADDRESS} \
+          --miner.gasprice 0 \
+          --bootnodes ${BOOTNODE_ENODE} \
+          --nat none \
+          --syncmode full
+
+networks:
+  privatenet:
+    driver: bridge

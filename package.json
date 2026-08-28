@@ -1,0 +1,24 @@
+{
+  "name": "financial-instruments",
+  "private": true,
+  "version": "1.0.0",
+  "description": "International settlement platform: private blockchain network + marketplace for stablecoins, shares and bonds",
+  "workspaces": [
+    "contracts",
+    "server",
+    "frontend"
+  ],
+  "scripts": {
+    "network:start": "node network/start-network.js",
+    "network:stop": "node network/stop-network.js",
+    "contracts:compile": "npm run compile --workspace=contracts",
+    "contracts:test": "npm run test --workspace=contracts",
+    "contracts:deploy": "npm run deploy --workspace=contracts",
+    "populate": "npm run populate --workspace=contracts",
+    "server:dev": "npm run dev --workspace=server",
+    "frontend:dev": "npm run dev --workspace=frontend"
+  },
+  "dependencies": {
+    "ethers": "^6.13.4"
+  }
+}
